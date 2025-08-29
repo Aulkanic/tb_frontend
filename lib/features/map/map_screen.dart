@@ -107,9 +107,7 @@ class _MapScreenState extends State<MapScreen> {
       final facility = facilities[i];
       
       LatLng? coordinates = facility.coordinates;
-      if (coordinates == null) {
-        coordinates = await GeocodingHelper.getCoordinates(facility.address);
-      }
+      coordinates ??= await GeocodingHelper.getCoordinates(facility.address);
       
       if (coordinates != null) {
         final marker = Marker(

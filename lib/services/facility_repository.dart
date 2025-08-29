@@ -1,3 +1,5 @@
+import 'package:tb_frontend/services/geocoding_helper.dart';
+
 import '../models/facility.dart';
 
 class FacilityRepository {

@@ -4,7 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class GeocodingHelper {
   static const String _baseUrl = 'https://maps.googleapis.com/maps/api/geocode/json';
-  static const String _apiKey = 'YOUR_GOOGLE_MAPS_API_KEY_HERE'; // Replace with actual API key
+  static const String _apiKey = 'AIzaSyBtvTPLbE1vK5Wy9e_mmM2ftKmQN131Z8A'; // Replace with actual API key
   
   // In-memory cache to avoid repeated API calls
   static final Map<String, LatLng> _cache = {};
