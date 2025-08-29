@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../models/facility.dart';
 import '../../services/facility_repository.dart';
 import '../../services/geocoding_helper.dart';
+import '../../services/config_service.dart';
 import '../contacts/facility_contacts_page.dart';
 
 class MapScreen extends StatefulWidget {
