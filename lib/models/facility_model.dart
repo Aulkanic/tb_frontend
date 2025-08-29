@@ -1,23 +1,25 @@
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-
 class Facility {
   final String name;
   final String address;
-  final String email;
-  final LatLng? coordinates;
+  final String? email;
+  final double? latitude;
+  final double? longitude;
 
   const Facility({
     required this.name,
     required this.address,
-    required this.email,
-    this.coordinates,
+    this.email,
+    this.latitude,
+    this.longitude,
   });
 
   factory Facility.fromJson(Map<String, dynamic> json) {
     return Facility(
       name: json['name'] ?? '',
       address: json['address'] ?? '',
-      email: json['email'] ?? '',
+      email: json['email']?.isNotEmpty == true ? json['email'] : null,
+      latitude: json['latitude']?.toDouble(),
+      longitude: json['longitude']?.toDouble(),
     );
   }
 
@@ -26,15 +28,14 @@ class Facility {
       'name': name,
       'address': address,
       'email': email,
-      'coordinates': coordinates != null 
-          ? {'lat': coordinates!.latitude, 'lng': coordinates!.longitude}
-          : null,
+      'latitude': latitude,
+      'longitude': longitude,
     };
   }
 
   @override
   String toString() {
-    return 'Facility(name: $name, address: $address, email: $email, coordinates: $coordinates)';
+    return 'Facility(name: $name, address: $address, email: $email, lat: $latitude, lng: $longitude)';
   }
 
   @override

@@ -45,5 +45,15 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	
+	<!-- Location permissions for Google Maps -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs access to location to show your current position on the map and provide directions to health facilities.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app needs access to location to show your current position on the map and provide directions to health facilities.</string>
+	
+	<!-- Google Maps API Key -->
+	<key>io.flutter.embedded_views_preview</key>
+	<true/>
 </dict>
 </plist>
