@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:math';
+import 'dart:math' as math;
 import '../../models/facility.dart';
 import '../../services/facility_repository.dart';
 import '../../services/geocoding_helper.dart';
 import '../../services/config_service.dart';
 import '../contacts/facility_contacts_page.dart';
 
-class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+class MapScreenEnhanced extends StatefulWidget {
+  const MapScreenEnhanced({super.key});
 
   @override
-  State<MapScreen> createState() => _MapScreenState();
+  State<MapScreenEnhanced> createState() => _MapScreenEnhancedState();
 }
 
-class _MapScreenState extends State<MapScreen> {
+class _MapScreenEnhancedState extends State<MapScreenEnhanced> {
   GoogleMapController? _mapController;
   Set<Marker> _markers = {};
   List<Facility> _facilities = [];
@@ -102,6 +102,108 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  /// Centers the map on nearby facilities and shows them in order of proximity
+  Future<void> _centerOnNearbyFacilities() async {
+    if (_currentPosition == null || _mapController == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enable location services to find nearby facilities'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    
+    try {
+      final currentLocation = LatLng(
+        _currentPosition!.latitude, 
+        _currentPosition!.longitude
+      );
+      
+      // Get nearby facilities sorted by distance
+      final nearbyFacilities = await FacilityRepository.getNearbyFacilities(currentLocation);
+      
+      if (nearbyFacilities.isNotEmpty) {
+        // Update facilities list with sorted order
+        setState(() {
+          _facilities = nearbyFacilities;
+        });
+        
+        // Get the nearest facility to center on
+        final nearestFacility = nearbyFacilities.first;
+        if (nearestFacility.coordinates != null) {
+          // Calculate bounds to include current location and nearest facilities
+          final bounds = _calculateBounds(
+            currentLocation, 
+            nearbyFacilities.take(5).toList() // Include top 5 nearest
+          );
+          
+          // Animate camera to show the bounds
+          await _mapController!.animateCamera(
+            CameraUpdate.newLatLngBounds(bounds, 50.0)
+          );
+          
+          // Show a snackbar with nearest facility info
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '📍 Nearest facility: ${nearestFacility.name} (${nearestFacility.distance?.toStringAsFixed(1)} km away)',
+                  style: const TextStyle(fontSize: 14),
+                ),
+                backgroundColor: Colors.green.shade600,
+                duration: const Duration(seconds: 3),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      print('Error centering on nearby facilities: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error finding nearby facilities: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  /// Calculates bounds to include current location and facilities
+  LatLngBounds _calculateBounds(LatLng currentLocation, List<Facility> facilities) {
+    double minLat = currentLocation.latitude;
+    double maxLat = currentLocation.latitude;
+    double minLng = currentLocation.longitude;
+    double maxLng = currentLocation.longitude;
+    
+    // Include current location
+    minLat = math.min(minLat, currentLocation.latitude);
+    maxLat = math.max(maxLat, currentLocation.latitude);
+    minLng = math.min(minLng, currentLocation.longitude);
+    maxLng = math.max(maxLng, currentLocation.longitude);
+    
+    // Include facilities
+    for (final facility in facilities) {
+      if (facility.coordinates != null) {
+        minLat = math.min(minLat, facility.coordinates!.latitude);
+        maxLat = math.max(maxLat, facility.coordinates!.latitude);
+        minLng = math.min(minLng, facility.coordinates!.longitude);
+        maxLng = math.max(maxLng, facility.coordinates!.longitude);
+      }
+    }
+    
+    // Add some padding
+    const double padding = 0.01; // About 1km
+    return LatLngBounds(
+      southwest: LatLng(minLat - padding, minLng - padding),
+      northeast: LatLng(maxLat + padding, maxLng + padding),
+    );
+  }
+
   Future<void> _createMarkers(List<Facility> facilities) async {
     final markers = <Marker>{};
     
@@ -141,74 +243,6 @@ class _MapScreenState extends State<MapScreen> {
     setState(() {
       _selectedFacility = null;
     });
-  }
-
-  void _centerOnNearbyFacilities() {
-    if (_currentPosition != null && _mapController != null) {
-      final currentLatLng = LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
-      
-      // Calculate bounds to include all facilities
-      double minLat = currentLatLng.latitude;
-      double maxLat = currentLatLng.latitude;
-      double minLng = currentLatLng.longitude;
-      double maxLng = currentLatLng.longitude;
-      
-      for (final marker in _markers) {
-        final position = marker.position;
-        minLat = min(minLat, position.latitude);
-        maxLat = max(maxLat, position.latitude);
-        minLng = min(minLng, position.longitude);
-        maxLng = max(maxLng, position.longitude);
-      }
-      
-      // Add some padding around the bounds
-      const padding = 0.01; // About 1km
-      minLat -= padding;
-      maxLat += padding;
-      minLng -= padding;
-      maxLng += padding;
-      
-      // Animate camera to show all facilities
-      _mapController!.animateCamera(
-        CameraUpdate.newLatLngBounds(
-          LatLngBounds(
-            southwest: LatLng(minLat, minLng),
-            northeast: LatLng(maxLat, maxLng),
-          ),
-          50.0, // padding in pixels
-        ),
-      );
-    } else if (_markers.isNotEmpty && _mapController != null) {
-      // If no current location, center on all facilities
-      double minLat = double.infinity;
-      double maxLat = -double.infinity;
-      double minLng = double.infinity;
-      double maxLng = -double.infinity;
-      
-      for (final marker in _markers) {
-        final position = marker.position;
-        minLat = min(minLat, position.latitude);
-        maxLat = max(maxLat, position.latitude);
-        minLng = min(minLng, position.longitude);
-        maxLng = max(maxLng, position.longitude);
-      }
-      
-      const padding = 0.01;
-      minLat -= padding;
-      maxLat += padding;
-      minLng -= padding;
-      maxLng += padding;
-      
-      _mapController!.animateCamera(
-        CameraUpdate.newLatLngBounds(
-          LatLngBounds(
-            southwest: LatLng(minLat, minLng),
-            northeast: LatLng(maxLat, maxLng),
-          ),
-          50.0,
-        ),
-      );
-    }
   }
 
   void _viewContacts() {
@@ -401,13 +435,27 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: Text(
-                        facility.name,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            facility.name,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          if (facility.distance != null)
+                            Text(
+                              '${facility.distance!.toStringAsFixed(1)} km away',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.green.shade600,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     IconButton(

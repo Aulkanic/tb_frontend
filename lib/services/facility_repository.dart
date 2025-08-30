@@ -1,5 +1,5 @@
 import 'package:tb_frontend/services/geocoding_helper.dart';
-
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../models/facility.dart';
 
 class FacilityRepository {
@@ -129,5 +129,43 @@ class FacilityRepository {
     }
     
     return geocodedFacilities;
+  }
+
+  /// Returns facilities sorted by distance from current location
+  static Future<List<Facility>> getNearbyFacilities(LatLng currentLocation) async {
+    final facilities = await getFacilitiesWithCoordinates();
+    
+    // Calculate distances for each facility
+    for (final facility in facilities) {
+      facility.setDistance(currentLocation);
+    }
+    
+    // Sort by distance (nearest first)
+    facilities.sort((a, b) {
+      if (a.distance == null && b.distance == null) return 0;
+      if (a.distance == null) return 1;
+      if (b.distance == null) return -1;
+      return a.distance!.compareTo(b.distance!);
+    });
+    
+    return facilities;
+  }
+
+  /// Returns the nearest facility to the current location
+  static Future<Facility?> getNearestFacility(LatLng currentLocation) async {
+    final nearbyFacilities = await getNearbyFacilities(currentLocation);
+    return nearbyFacilities.isNotEmpty ? nearbyFacilities.first : null;
+  }
+
+  /// Returns facilities within a specified radius (in kilometers)
+  static Future<List<Facility>> getFacilitiesWithinRadius(
+    LatLng currentLocation, 
+    double radiusKm
+  ) async {
+    final nearbyFacilities = await getNearbyFacilities(currentLocation);
+    return nearbyFacilities
+        .where((facility) => 
+            facility.distance != null && facility.distance! <= radiusKm)
+        .toList();
   }
 }
