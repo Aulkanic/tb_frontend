@@ -48,9 +48,7 @@ class _TbisitaSplashPageState extends State<TbisitaSplashPage>
     );
   }
 
-  void _navigateToMap() {
-    Navigator.pushNamed(context, '/map');
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -101,25 +99,7 @@ class _TbisitaSplashPageState extends State<TbisitaSplashPage>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 30),
-                    ElevatedButton(
-                      onPressed: _navigateToMap,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFFFF6C65),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      child: const Text(
-                        'Test Health Facilities Map',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
+
                   ],
                 ),
               ),

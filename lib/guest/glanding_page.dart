@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tb_frontend/guest/gviewdoctor.dart';
 import 'package:tb_frontend/guest/gappointment.dart';
 import 'package:tb_frontend/guest/gconsultant.dart';
-import 'package:tb_frontend/guest/gtbfacility.dart';
+import 'package:tb_frontend/features/map/map_screen_enhanced.dart';
 
 class GlandingPage extends StatefulWidget {
   const GlandingPage({super.key});
@@ -71,7 +71,7 @@ class _GlandingPageState extends State<GlandingPage> {
                   context,
                   Icons.local_hospital,
                   'TB DOTS\nFacilities',
-                  const GtbfacilityPage(),
+                  const MapScreenEnhanced(),
                 ),
               ],
             ),
