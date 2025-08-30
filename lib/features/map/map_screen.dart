@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:math';
 import '../../models/facility.dart';
 import '../../services/facility_repository.dart';
 import '../../services/geocoding_helper.dart';
-import '../../services/config_service.dart';
+import 'dart:math'; 
 import '../contacts/facility_contacts_page.dart';
 
 class MapScreen extends StatefulWidget {
@@ -50,7 +49,7 @@ class _MapScreenState extends State<MapScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error initializing map: $e');
+      debugPrint('Error initializing map: $e');
       setState(() {
         _isLoading = false;
       });
@@ -81,7 +80,7 @@ class _MapScreenState extends State<MapScreen> {
         });
       }
     } catch (e) {
-      print('Error requesting location permission: $e');
+      debugPrint('Error requesting location permission: $e');
       setState(() {
         _locationPermissionGranted = false;
         _locationPermissionMessage = 'Unable to access location services.';
@@ -92,13 +91,15 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _getCurrentLocation() async {
     try {
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
       setState(() {
         _currentPosition = position;
       });
     } catch (e) {
-      print('Error getting current location: $e');
+      debugPrint('Error getting current location: $e');
     }
   }
 
@@ -141,74 +142,6 @@ class _MapScreenState extends State<MapScreen> {
     setState(() {
       _selectedFacility = null;
     });
-  }
-
-  void _centerOnNearbyFacilities() {
-    if (_currentPosition != null && _mapController != null) {
-      final currentLatLng = LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
-      
-      // Calculate bounds to include all facilities
-      double minLat = currentLatLng.latitude;
-      double maxLat = currentLatLng.latitude;
-      double minLng = currentLatLng.longitude;
-      double maxLng = currentLatLng.longitude;
-      
-      for (final marker in _markers) {
-        final position = marker.position;
-        minLat = min(minLat, position.latitude);
-        maxLat = max(maxLat, position.latitude);
-        minLng = min(minLng, position.longitude);
-        maxLng = max(maxLng, position.longitude);
-      }
-      
-      // Add some padding around the bounds
-      const padding = 0.01; // About 1km
-      minLat -= padding;
-      maxLat += padding;
-      minLng -= padding;
-      maxLng += padding;
-      
-      // Animate camera to show all facilities
-      _mapController!.animateCamera(
-        CameraUpdate.newLatLngBounds(
-          LatLngBounds(
-            southwest: LatLng(minLat, minLng),
-            northeast: LatLng(maxLat, maxLng),
-          ),
-          50.0, // padding in pixels
-        ),
-      );
-    } else if (_markers.isNotEmpty && _mapController != null) {
-      // If no current location, center on all facilities
-      double minLat = double.infinity;
-      double maxLat = -double.infinity;
-      double minLng = double.infinity;
-      double maxLng = -double.infinity;
-      
-      for (final marker in _markers) {
-        final position = marker.position;
-        minLat = min(minLat, position.latitude);
-        maxLat = max(maxLat, position.latitude);
-        minLng = min(minLng, position.longitude);
-        maxLng = max(maxLng, position.longitude);
-      }
-      
-      const padding = 0.01;
-      minLat -= padding;
-      maxLat += padding;
-      minLng -= padding;
-      maxLng += padding;
-      
-      _mapController!.animateCamera(
-        CameraUpdate.newLatLngBounds(
-          LatLngBounds(
-            southwest: LatLng(minLat, minLng),
-            northeast: LatLng(maxLat, maxLng),
-          ),
-          50.0,
-        ),
-      );
-    }
   }
 
   void _viewContacts() {
@@ -255,12 +188,50 @@ class _MapScreenState extends State<MapScreen> {
         throw Exception('Could not launch $url');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error opening maps: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening maps: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _centerOnNearbyFacilities() {
+    if (_mapController != null && _facilities.isNotEmpty) {
+      // Calculate bounds to include all facilities
+      double minLat = double.infinity;
+      double maxLat = -double.infinity;
+      double minLng = double.infinity;
+      double maxLng = -double.infinity;
+      
+      for (final facility in _facilities) {
+        if (facility.coordinates != null) {
+          minLat = min(minLat, facility.coordinates!.latitude);
+          maxLat = max(maxLat, facility.coordinates!.latitude);
+          minLng = min(minLng, facility.coordinates!.longitude);
+          maxLng = max(maxLng, facility.coordinates!.longitude);
+        }
+      }
+      
+      // If we have valid coordinates, animate to show all facilities
+      if (minLat != double.infinity && maxLat != -double.infinity) {
+        final bounds = LatLngBounds(
+          southwest: LatLng(minLat, minLng),
+          northeast: LatLng(maxLat, maxLng),
+        );
+        
+        _mapController!.animateCamera(
+          CameraUpdate.newLatLngBounds(bounds, 50.0), // 50px padding
+        );
+      } else {
+        // Fallback to Davao center if no facility coordinates
+        _mapController!.animateCamera(
+          CameraUpdate.newLatLngZoom(_davaoCenter, 12),
+        );
+      }
     }
   }
 
@@ -360,7 +331,7 @@ class _MapScreenState extends State<MapScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -470,7 +441,7 @@ class _MapScreenState extends State<MapScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ).copyWith(
-                          backgroundColor: MaterialStateProperty.all(Colors.transparent),
+                          backgroundColor: WidgetStateProperty.all(Colors.transparent),
                         ),
                         child: Container(
                           decoration: BoxDecoration(
