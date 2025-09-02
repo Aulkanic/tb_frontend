@@ -1,16 +1,58 @@
 # tb_frontend
 
-A new Flutter project.
+A Flutter project with Google Maps integration for health facilities mapping.
 
-## Getting Started
+## 🚨 **IMPORTANT: Maps Setup Required!**
 
-This project is a starting point for a Flutter application.
+**If you've cloned this project and maps are not working, you MUST follow the setup guide:**
 
-A few resources to get you started if this is your first Flutter project:
+📖 **[CLIENT_SETUP.md](CLIENT_SETUP.md)** - Complete setup guide for getting maps working
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+🔧 **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Troubleshooting common issues
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🗺️ **What This Project Does**
+
+- Health facilities mapping application
+- Google Maps integration
+- Location services
+- Route planning
+- Firebase backend integration
+
+## 🚀 **Quick Start (After Setup)**
+
+1. **Complete the setup guide first** (maps won't work without it!)
+2. Run the app:
+   ```bash
+   flutter clean
+   flutter pub get
+   flutter run
+   ```
+
+## 📱 **Supported Platforms**
+
+- ✅ Android (with Google Play Services)
+- ✅ iOS (physical devices recommended)
+- ⚠️ Web (limited map functionality)
+
+## 🔑 **Required Setup**
+
+- Google Maps API key
+- Environment variables configuration
+- Platform-specific API key setup
+
+## 📚 **Documentation**
+
+- **[CLIENT_SETUP.md](CLIENT_SETUP.md)** - Complete setup guide
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Fix common issues
+- **[ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md)** - Developer setup guide
+
+## 🆘 **Need Help?**
+
+1. Check the troubleshooting guide first
+2. Ensure you've completed the setup steps
+3. Check console output for error messages
+4. Verify your Google Maps API key is correct
+
+---
+
+**Remember:** Maps will NOT work until you complete the setup process. This is normal and expected for security reasons.
